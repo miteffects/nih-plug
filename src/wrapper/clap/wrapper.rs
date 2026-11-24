@@ -2618,11 +2618,15 @@ impl<P: ClapPlugin> Wrapper<P> {
         } else {
             index + num_input_ports
         };
+        // CLAP pairs ports for in-place processing only when they have the same layout, so a
+        // layout like mono in, stereo out has no pair
+        let same_main_layout = current_audio_io_layout.main_input_channels
+            == current_audio_io_layout.main_output_channels;
         let pair_stable_id = match (is_input, is_main_port) {
             // Ports are named linearly with inputs coming before outputs, so this is the index of
             // the first output port
-            (true, true) if has_main_output => num_input_ports,
-            (false, true) if has_main_input => 0,
+            (true, true) if has_main_output && same_main_layout => num_input_ports,
+            (false, true) if has_main_input && same_main_layout => 0,
             _ => CLAP_INVALID_ID,
         };
 
